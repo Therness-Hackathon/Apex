@@ -1,0 +1,28 @@
+============================================================
+  APEX WELD QUALITY – PIPELINE SUMMARY
+============================================================
+
+Total runs  : 1551
+  good      : 731
+  defect    : 820
+
+Defect sub-types:
+  excessive_penetration         : 259
+  burnthrough                   : 169
+  lack_of_fusion                : 158
+  excessive_convexity           : 80
+  overlap                       : 79
+  crater_cracks                 : 75
+
+Data-quality issues: 0
+Weld duration (s) : mean=36.4  std=5.7  min=21.8  max=188.3
+Feature shape     : 1551 × 104
+Split train        : 1047 runs
+Split val          : 240 runs
+Split test         : 264 runs
+
+============================================================
+
+Test accuracy : 0.788
+Test F1       : 0.830
+Model saved   : C:\New folder\Apex\outputs\models\weld_classifier.pt

@@ -1,0 +1,60 @@
+============================================================
+  PHASE 2 – BINARY CLASSIFICATION REPORT (VAL)
+============================================================
+  Threshold          : 0.3400
+  Samples            : 240  (good=112, defect=128)
+
+  Accuracy           : 0.8125
+  Precision          : 0.7456
+  Recall (Sensitivity): 0.9844
+  Specificity        : 0.6161
+  F1 Score           : 0.8485
+  ROC AUC            : 0.8073
+  Average Precision  : 0.7482
+  Brier Score        : 0.1647
+  Log Loss           : 0.5144
+
+  Confusion Matrix:
+    TP=126  FN=2
+    FP=43  TN=69
+
+  False Positives    : 43
+  False Negatives    : 2
+============================================================
+
+============================================================
+  PHASE 2 – BINARY CLASSIFICATION REPORT (TEST)
+============================================================
+  Threshold          : 0.3400
+  Samples            : 264  (good=127, defect=137)
+
+  Accuracy           : 0.8750
+  Precision          : 0.8133
+  Recall (Sensitivity): 0.9854
+  Specificity        : 0.7559
+  F1 Score           : 0.8911
+  ROC AUC            : 0.8827
+  Average Precision  : 0.8283
+  Brier Score        : 0.1192
+  Log Loss           : 0.4444
+
+  Confusion Matrix:
+    TP=135  FN=2
+    FP=31  TN=96
+
+  False Positives    : 31
+  False Negatives    : 2
+============================================================
+
+Decision Threshold: 0.3400  (F1-maximised on validation set)
+Temperature:        1.1940
+
+Confidence Definition:
+  confidence = P(predicted_class)
+  i.e. P(defect) when pred=defect, P(good)=1-P(defect) when pred=good
+  Calibrated via temperature scaling (Guo et al., ICML 2017)
+
+Threshold Policy:
+  If P(defect) >= 0.3400 → classify as DEFECT
+  If P(defect) <  0.3400 → classify as GOOD
+  Threshold was fixed before seeing test labels (no test-set leakage).
