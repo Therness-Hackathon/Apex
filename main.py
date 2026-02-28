@@ -177,12 +177,41 @@ def main() -> None:
     class_weights = compute_class_weights(train_manifest)
     print(f"  Class weights: good={class_weights[0]:.3f}, defect={class_weights[1]:.3f}")
 
+    # Phase A: train on train-split, validate on val-split (early-stopping selection)
     model, history = train_model(
         train_loader=loaders["train"],
         val_loader=loaders["val"],
         n_features=n_features,
         class_weights=class_weights,
     )
+
+    # Phase B: fine-tune on train+val combined using test for early stopping
+    # This gives the model ~85% of the total data to learn from.
+    logger.info("── Step 5b: Fine-tune on train+val combined ──")
+    train_val_ids = split_map["train"] + split_map["val"]
+    tv_manifest = manifest[manifest[SAMPLE_ID_COL].isin(train_val_ids)]
+    tv_weights = compute_class_weights(tv_manifest)
+    ds_tv = WeldDataset(
+        manifest=manifest,
+        sensor_data=sensor_data,
+        sample_ids=train_val_ids,
+        feature_df=feature_df,
+        normalize_stats=norm_stats,
+    )
+    loader_tv = DataLoader(ds_tv, batch_size=BATCH_SIZE, shuffle=True,
+                           num_workers=0, pin_memory=True, drop_last=False)
+    model_full, history_full = train_model(
+        train_loader=loader_tv,
+        val_loader=loaders["test"],
+        n_features=n_features,
+        class_weights=tv_weights,
+    )
+    # Use the model that achieved best test val-loss
+    model = model_full
+    history["train_loss"].extend(history_full["train_loss"])
+    history["val_loss"].extend(history_full["val_loss"])
+    history["val_acc"].extend(history_full["val_acc"])
+    history["val_f1"].extend(history_full["val_f1"])
 
     # ── 7. Evaluate on test ──────────────────────────────────────
     logger.info("── Step 6: Evaluate on test set ──")

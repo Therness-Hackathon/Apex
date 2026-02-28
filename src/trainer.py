@@ -159,10 +159,10 @@ def train_model(
 
     if class_weights is not None:
         class_weights = class_weights.to(device)
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=3,
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=num_epochs, eta_min=lr * 0.01,
     )
 
     history: Dict[str, List[float]] = {
@@ -209,7 +209,7 @@ def train_model(
         # ── val ──
         val_loss, val_acc, val_f1 = evaluate(model, val_loader, criterion, device)
 
-        scheduler.step(val_loss)
+        scheduler.step()
         elapsed = time.time() - t0
 
         history["train_loss"].append(avg_train_loss)

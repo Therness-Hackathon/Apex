@@ -23,6 +23,6 @@ Split test         : 264 runs
 
 ============================================================
 
-Test accuracy : 0.788
-Test F1       : 0.830
+Test accuracy : 0.913
+Test F1       : 0.922
 Model saved   : C:\New folder\Apex\outputs\models\weld_classifier.pt

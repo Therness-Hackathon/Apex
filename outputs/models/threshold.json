@@ -1,4 +1,3 @@
 {
-  "threshold": 0.34,
-  "strategy": "f1_on_val"
+  "threshold": 0.69
 }

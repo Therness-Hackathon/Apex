@@ -80,9 +80,9 @@ WINDOW_STRIDE = 25
 # Training hyper-parameters
 # ──────────────────────────────────────────────
 BATCH_SIZE = 32
-NUM_EPOCHS = 30
-LEARNING_RATE = 1e-3
-WEIGHT_DECAY = 1e-4
+NUM_EPOCHS = 60
+LEARNING_RATE = 5e-4
+WEIGHT_DECAY = 5e-4
 HIDDEN_DIMS: Tuple[int, ...] = (256, 128, 64)
-DROPOUT = 0.3
-EARLY_STOP_PATIENCE = 7
+DROPOUT = 0.5
+EARLY_STOP_PATIENCE = 12

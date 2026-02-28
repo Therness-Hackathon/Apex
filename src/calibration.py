@@ -111,6 +111,9 @@ def fit_temperature(
 
     def _closure():
         optimizer.zero_grad()
+        # Keep temperature strictly positive (prevents NLL-minimising sign flip)
+        with torch.no_grad():
+            scaler.temperature.clamp_(min=0.05, max=10.0)
         scaled = all_logits / scaler.temperature
         loss = criterion(scaled, all_labels)
         loss.backward()
@@ -118,9 +121,24 @@ def fit_temperature(
 
     optimizer.step(_closure)
 
+    # Final clamp after optimisation
+    with torch.no_grad():
+        scaler.temperature.clamp_(min=0.05, max=10.0)
+
     T_val = scaler.temperature.item()
     with torch.no_grad():
         nll_after = criterion(all_logits / scaler.temperature, all_labels).item()
+
+    # If calibration did not improve, fall back to T = 1.0
+    if nll_after > nll_before:
+        logger.warning(
+            "Temperature calibration did not improve NLL (%.4f → %.4f). "
+            "Resetting T=1.0",
+            nll_before, nll_after,
+        )
+        scaler.temperature.data.fill_(1.0)
+        T_val = 1.0
+        nll_after = nll_before
 
     logger.info("NLL after  temperature scaling: %.4f  (T=%.4f)", nll_after, T_val)
     logger.info("Temperature learned: %.4f", T_val)

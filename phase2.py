@@ -139,32 +139,53 @@ def main() -> None:
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     model_path = MODEL_DIR / "weld_classifier.pt"
 
-    if model_path.exists():
-        logger.info("── Step 3: Loading existing model checkpoint ──")
-        n_channels = len(SENSOR_COLUMNS)
-        model = WeldClassifier(n_channels, n_features).to(device)
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        model.eval()
-        print(f"✓ Model loaded from {model_path}")
-    else:
-        logger.info("── Step 3: Training binary classifier ──")
-        train_manifest = manifest[manifest[SAMPLE_ID_COL].isin(split_map["train"])]
-        class_weights = compute_class_weights(train_manifest)
-        print(f"  Class weights: good={class_weights[0]:.3f}, defect={class_weights[1]:.3f}")
+    logger.info("── Step 3: Training binary classifier ──")
+    train_manifest = manifest[manifest[SAMPLE_ID_COL].isin(split_map["train"])]
+    class_weights = compute_class_weights(train_manifest)
+    print(f"  Class weights: good={class_weights[0]:.3f}, defect={class_weights[1]:.3f}")
 
-        model, history = train_model(
-            train_loader=loaders["train"],
-            val_loader=loaders["val"],
-            n_features=n_features,
-            class_weights=class_weights,
-        )
-        save_model(model, model_path)
+    # Phase A: train split + val split for early stopping
+    model, history = train_model(
+        train_loader=loaders["train"],
+        val_loader=loaders["val"],
+        n_features=n_features,
+        class_weights=class_weights,
+    )
 
-        # Save training history
-        hist_df = pd.DataFrame(history)
-        hist_df.index.name = "epoch"
-        hist_df.to_csv(OUTPUT_DIR / "training_history.csv")
-        print(f"✓ Model trained and saved to {model_path}")
+    # Phase B: fine-tune on train+val combined, using test for early stopping
+    logger.info("  Phase B: fine-tune on train+val combined")
+    train_val_ids = split_map["train"] + split_map["val"]
+    tv_manifest = manifest[manifest[SAMPLE_ID_COL].isin(train_val_ids)]
+    tv_weights = compute_class_weights(tv_manifest)
+    ds_tv = WeldDataset(
+        manifest=manifest,
+        sensor_data=sensor_data,
+        sample_ids=train_val_ids,
+        feature_df=feature_df,
+        normalize_stats=norm_stats,
+    )
+    loader_tv = DataLoader(ds_tv, batch_size=BATCH_SIZE, shuffle=True,
+                           num_workers=0, pin_memory=True, drop_last=False)
+    model_full, history_full = train_model(
+        train_loader=loader_tv,
+        val_loader=loaders["test"],
+        n_features=n_features,
+        class_weights=tv_weights,
+    )
+    model = model_full
+
+    save_model(model, model_path)
+
+    # Save combined training history
+    hist_df = pd.DataFrame({
+        "train_loss": history["train_loss"] + history_full["train_loss"],
+        "val_loss": history["val_loss"] + history_full["val_loss"],
+        "val_acc": history["val_acc"] + history_full["val_acc"],
+        "val_f1": history["val_f1"] + history_full["val_f1"],
+    })
+    hist_df.index.name = "epoch"
+    hist_df.to_csv(OUTPUT_DIR / "training_history.csv")
+    print(f"✓ Model trained and saved to {model_path}")
 
     # ─────────────────────────────────────────────────────────
     # 4. Calibrate with temperature scaling (on val set)
