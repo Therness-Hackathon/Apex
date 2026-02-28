@@ -1,0 +1,20 @@
+============================================================
+  APEX WELD QUALITY – PHASE 1 SUMMARY
+============================================================
+
+Total runs discovered : 10
+Labelled runs        : 10
+  good                : 7
+  defect              : 3
+
+Data-quality issues  : 0
+
+Weld duration (s)    : mean=37.4  std=0.1  min=37.3  max=37.5
+Images per run       : mean=5.0  min=5  max=5
+
+Feature table shape  : 10 samples × 104 features
+Split train           : 6 runs  ['08-17-22-0016-00', '08-17-22-0011-00', '08-18-22-0020-00', '08-17-22-0017-00', '08-17-22-0013-00', '08-17-22-0012-00']
+Split val             : 2 runs  ['08-17-22-0019-00', '08-17-22-0015-00']
+Split test            : 2 runs  ['08-17-22-0018-00', '08-17-22-0014-00']
+
+============================================================
